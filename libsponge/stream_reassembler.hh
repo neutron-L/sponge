@@ -5,6 +5,8 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
+using std::vector;
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -12,9 +14,16 @@ class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
 
-    ByteStream _output;  //!< The reassembled in-order byte stream
-    size_t _capacity;    //!< The maximum number of bytes
+    ByteStream _output;          //!< The reassembled in-order byte stream
+    size_t _capacity;            //!< The maximum number of bytes
+    size_t _unassembled_size{};  // The number of unressembled and unread bytes
+    unsigned long _first_unread_idx{};
+    unsigned long _first_unassembled_idx{};
+    bool _eof{};  // whether receive the last byte
 
+    vector<char> _inbuffer;  // auxiliry storage, include the unread and unassembled data
+    vector<bool>
+        _arrived;  // Identify whether the bytes at the corresponding position in the secondary buffer have arrived
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
     //! \note This capacity limits both the bytes that have been reassembled,
