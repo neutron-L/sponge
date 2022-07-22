@@ -24,6 +24,10 @@ class StreamReassembler {
     vector<char> _inbuffer;  // auxiliry storage, include the unread and unassembled data
     vector<bool>
         _arrived;  // Identify whether the bytes at the corresponding position in the secondary buffer have arrived
+
+    /* adjust window */
+    void adjust_window();
+
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
     //! \note This capacity limits both the bytes that have been reassembled,
@@ -52,9 +56,15 @@ class StreamReassembler {
     //! should only be counted once for the purpose of this function.
     size_t unassembled_bytes() const;
 
+    /* window size from first_unassembled byte to first unacceptable byte */
+    size_t window_size();
+
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
     bool empty() const;
+
+    /* ack expected , equals the _first_unassembled_idx*/
+    size_t head_index() const { return _first_unassembled_idx; }
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH

@@ -22,11 +22,8 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     auto len = data.length();
 
     // Adjust the index of read data
-    auto i = _first_unassembled_idx - _output.buffer_size();
-    while (_first_unread_idx < i) {
-        _arrived[_first_unread_idx % _capacity] = false;
-        _first_unread_idx++;
-    }
+    adjust_window();
+
     size_t first_unacceptable_idx = _first_unread_idx + _capacity;
 
     // if eof is true, and the last byte of data is within the window, then the _eof is true
@@ -73,4 +70,18 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
 
 size_t StreamReassembler::unassembled_bytes() const { return _unassembled_size; }
 
+size_t StreamReassembler::window_size() {
+    adjust_window();
+    auto first_unacceptable = _first_unread_idx + _capacity;
+    return first_unacceptable - _first_unassembled_idx;
+}
+
 bool StreamReassembler::empty() const { return _unassembled_size == 0 && _eof; }
+
+void StreamReassembler::adjust_window() {
+    auto i = _first_unassembled_idx - _output.buffer_size();
+    while (_first_unread_idx < i) {
+        _arrived[_first_unread_idx % _capacity] = false;
+        _first_unread_idx++;
+    }
+}
