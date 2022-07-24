@@ -23,7 +23,7 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
     auto data = seg.payload();
     auto seqno = header.seqno;
     //
-    if ((header.syn && data.size()) || (header.syn && header.fin))
+    if (header.syn && (data.size() || header.fin))
         seqno = seqno + 1;
     if (_has_syn) {
         // assert(ackno().has_value());
