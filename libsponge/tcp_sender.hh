@@ -35,10 +35,12 @@ class TCPSender {
 
     /* bytes_in_flight */
     size_t _bytes_in_flight{};
-    uint16_t _send_window_size{};
     uint16_t _receive_window_size{};
     unsigned int RTO{};
     unsigned int _clock{};
+
+    uint64_t _input_end_index{0};  // the ending index of input
+    uint64_t checkpoint{0};
 
     bool _syn_sent{};
     bool _syn_acked{};
@@ -46,10 +48,11 @@ class TCPSender {
     bool _fin_acked{};
 
     bool _zero_size{};
+    bool _recv_fin{};
 
     /* Number of consecutive transmissions */
     unsigned int _number_of_consecutive_transmissions{};
-    void _send_segment(uint16_t size, bool syn, bool fin);
+    void _send_segment(uint16_t size, bool syn, bool fin, bool rst = false);
 
   public:
     //! Initialize a TCPSender
@@ -106,6 +109,13 @@ class TCPSender {
     //! \brief relative seqno for the next byte to be sent
     WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
     //!@}
+
+    bool syn_sent() const { return _syn_sent; }
+    bool syn_acked() const { return _syn_acked; };
+    bool fin_sent() const { return _fin_sent; }
+    bool fin_acked() const { return _fin_acked; }
+
+    void has_recv_fin() { _recv_fin = true; }
 };
 
 #endif  // SPONGE_LIBSPONGE_TCP_SENDER_HH
