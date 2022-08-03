@@ -53,8 +53,8 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
         bool has_data = seg.payload().size();
         if (empty && (syn_recv || fin_recv || has_data))
             _sender.send_empty_segment();
-        if (seg.header().fin)
-            _sender.has_recv_fin();
+        // if (seg.header().fin)
+        //     _sender.has_recv_fin();
         send_segment(false);
     }
 }
@@ -70,6 +70,7 @@ size_t TCPConnection::write(const string &data) {
 //! \param[in] ms_since_last_tick number of milliseconds since the last call to this method
 void TCPConnection::tick(const size_t ms_since_last_tick) {
     _clock += ms_since_last_tick;
+    // cerr << "clock " << _clock << endl;
     _sender.tick(ms_since_last_tick);
     if (_sender.consecutive_retransmissions() > TCPConfig::MAX_RETX_ATTEMPTS) {
         if (_sender.segments_out().empty())

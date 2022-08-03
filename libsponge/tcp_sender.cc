@@ -65,6 +65,8 @@ void TCPSender::fill_window() {
         // if no payload no fin no syn just break
         if (payload_size == 0 && !header.fin && !header.syn)
             break;
+        // if (header.fin)
+        // cerr << "send fin " << header.seqno.raw_value() << ' ' << header.ackno.raw_value() << endl;
         header.seqno = next_seqno();
         segment.header() = header;
         segment.payload() = payload;
@@ -120,9 +122,11 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
 void TCPSender::tick(const size_t ms_since_last_tick) {
+    if (_buffer.empty())
+        return;
     _clock += ms_since_last_tick;
     if (_clock >= RTO && !_buffer.empty()) {
-                _segments_out.push(_buffer.front());
+        _segments_out.push(_buffer.front());
         if (_receive_window_size != 0) {
             _number_of_consecutive_transmissions++;
             RTO *= 2;
