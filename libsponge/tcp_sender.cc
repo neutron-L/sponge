@@ -129,7 +129,7 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
         _segments_out.push(_buffer.front());
         if (_receive_window_size != 0) {
             _number_of_consecutive_transmissions++;
-            RTO *= 2;
+            RTO <<= 1;
         }
         _clock = 0;
     }

@@ -5,6 +5,7 @@
 #include "tcp_over_ip.hh"
 #include "tun.hh"
 
+#include <map>
 #include <optional>
 #include <queue>
 
@@ -39,6 +40,28 @@ class NetworkInterface {
 
     //! outbound queue of Ethernet frames that the NetworkInterface wants sent
     std::queue<EthernetFrame> _frames_out{};
+
+    //! Buffer datagrams ready to be sent but the destination MAC address is unknown
+    using pii = std::pair<InternetDatagram, uint32_t>;
+    std::queue<pii> _buffer{};
+
+    //! ARP cache for ip --> ether address
+    std::map<uint32_t, EthernetAddress> _arp_cache{};
+
+    //! ARP timer for ip --> timer
+    std::map<uint32_t, uint32_t> _arp_timers{};
+
+    //! clock
+    uint32_t _clock{};
+
+    //! broadcast ether address
+    EthernetAddress broadcast_addr{};
+
+    //! make a ARP request for the specified ip address
+    void make_arp(uint16_t opcode, uint32_t ip_addr, EthernetAddress ether_addr);
+
+    //! send a datagram that known the dst ether addr
+    void _send_datagram(const InternetDatagram &dgram, const uint32_t &next_hop_ip);
 
   public:
     //! \brief Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer) addresses
