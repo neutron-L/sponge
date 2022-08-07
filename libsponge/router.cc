@@ -16,7 +16,7 @@ using namespace std;
 // You will need to add private members to the class declaration in `router.hh`
 
 template <typename... Targs>
-void DUMMY_CODE(Targs &&... /* unused */) {}
+void DUMMY_CODE(Targs &&.../* unused */) {}
 
 //! \param[in] route_prefix The "up-to-32-bit" IPv4 address prefix to match the datagram's destination address against
 //! \param[in] prefix_length For this route to be applicable, how many high-order (most-significant) bits of the route_prefix will need to match the corresponding bits of the datagram's destination address?
@@ -29,14 +29,40 @@ void Router::add_route(const uint32_t route_prefix,
     cerr << "DEBUG: adding route " << Address::from_ipv4_numeric(route_prefix).ip() << "/" << int(prefix_length)
          << " => " << (next_hop.has_value() ? next_hop->ip() : "(direct)") << " on interface " << interface_num << "\n";
 
-    DUMMY_CODE(route_prefix, prefix_length, next_hop, interface_num);
+    route_table.emplace_back(Route(route_prefix, prefix_length, next_hop, interface_num));
     // Your code here.
 }
 
 //! \param[in] dgram The datagram to be routed
 void Router::route_one_datagram(InternetDatagram &dgram) {
-    DUMMY_CODE(dgram);
-    // Your code here.
+    // If the TTL was zero already,
+    if (dgram.header().ttl == 0)
+        return;
+    dgram.header().ttl--;
+    // hits zero after the decrement
+    if (dgram.header().ttl == 0)
+        return;
+    // searches the routing table
+    int idx = -1;
+    uint8_t len;
+    auto size = route_table.size();
+    uint8_t longest_prefix_match{0};
+
+    for (unsigned int i = 0; i < size; i++) {
+        len = match(i, dgram.header().dst);
+        if (idx == -1 || len > longest_prefix_match) {
+            idx = i;
+            longest_prefix_match = len;
+        }
+    }
+
+    if (idx != -1) {
+        Route route = route_table[idx];
+        if (route.next_hop.has_value())
+            interface(route.interface_num).send_datagram(dgram, route.next_hop->ip());
+        else
+            interface(route.interface_num).send_datagram(dgram, Address::from_ipv4_numeric(dgram.header().dst));
+    }
 }
 
 void Router::route() {
@@ -48,4 +74,11 @@ void Router::route() {
             queue.pop();
         }
     }
+}
+
+uint8_t Router::match(int i, uint32_t ip_addr) {
+    Route route = route_table[i];
+    if (((route.route_prefix >> (32 - route.prefix_length)) ^ (ip_addr >> (32 - route.prefix_length))) == 0)
+        return route.prefix_length;
+    return 0;
 }
